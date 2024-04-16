@@ -50,5 +50,7 @@ namespace Colibo.Assignment.Models
 
         [JsonProperty("id")]
         public string? Id { get; set; }
+        [JsonProperty("EmployeeId")]
+        public string? EmployeeId { get; set; }
     }
 }

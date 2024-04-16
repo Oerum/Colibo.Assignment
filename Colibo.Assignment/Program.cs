@@ -45,6 +45,19 @@ namespace Colibo.Assignment
             var content = await response.Content.ReadAsStringAsync();
             var graphModel = JsonConvert.DeserializeObject<Models.GraphModel>(content);
 
+            HttpResponseMessage employeeIdResponse = await client.GetAsync("https://graph.microsoft.com/v1.0/users?$select=employeeId");
+            var employeeIdContent = await employeeIdResponse.Content.ReadAsStringAsync();
+            var employeeIdModel = JsonConvert.DeserializeObject<Models.GraphModel>(employeeIdContent);
+
+            // Merge employeeId data with graph data
+            foreach (var person in graphModel!.Value!)
+            {
+                var employeeIdPerson = employeeIdModel!.Value!.FirstOrDefault(x => x.DisplayName == person.DisplayName);
+                if (employeeIdPerson != null)
+                {
+                    person.EmployeeId = employeeIdPerson.EmployeeId;
+                }
+            }
 
             // Read xml data from embedded file
             //Assembly assembly = Assembly.GetExecutingAssembly();
@@ -126,14 +139,11 @@ namespace Colibo.Assignment
                 if (graphPerson != null)
                 {
                     // Replace person data with graph data if person data is missing
-                    //if (person.Number != Convert.ToInt32(graphPerson.Id))
-                    //{
-                    //    person.Number = Convert.ToInt32(graphPerson.Id);
-                    //    if (person.Number != 0)
-                    //        logger.LogInformation($"Added number '{graphPerson.Id}' to person '{person.Name}'");
-                    //}
-
-                    person.Number = person.Number;
+                    if (!string.IsNullOrEmpty(graphPerson.EmployeeId))
+                    {
+                        person.Number ??= graphPerson.EmployeeId;
+                        logger.LogInformation($"Added number '{graphPerson.Id}' to person '{person.Name}'");
+                    }
                     
                     person.Name ??= graphPerson.DisplayName;
                     if (person.Name != null)
